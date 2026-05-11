@@ -19,5 +19,6 @@ Me, i guess?
 ## Acknowledgments
 I followed them, so credit goes to them (i copied the whole thing but ok T-T)
 
-[Ryan Pendleton ](https://github.com/rpendleton) 
+[Ryan Pendleton ](https://github.com/rpendleton)
+
 [Justin Meiners](https://github.com/justinmeiners)
