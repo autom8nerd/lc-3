@@ -16,6 +16,7 @@ uint16_t memory[MEMORY_MAX];
 uint16_t sign_extend(uint16_t, int);
 void update_flags(uint16_t);
 void add(uint16_t instr);
+uint16_t mem_read(uint16_t);
 // registers; lc-3 has total of 10 registers. 8 GPCs, 1 PC, 1 conditional flag
 enum {
   R_R0 = 0,
@@ -91,8 +92,22 @@ int main(int argc, const char *argv[]) {
     case OP_ADD:
       add(instr);
       break;
-    case OP_AND:
-      @{ AND } break;
+    case OP_AND: {
+      {
+        uint16_t r0 = (instr >> 9) & 0x7;
+        uint16_t r1 = (instr >> 6) & 0x7;
+        uint16_t imm_flag = (instr >> 5) & 0x1;
+
+        if (imm_flag) {
+          uint16_t imm5 = sign_extend(instr & 0x1F, 5);
+          reg[r0] = reg[r1] & imm5;
+        } else {
+          uint16_t r2 = instr & 0x7;
+          reg[r0] = reg[r1] & reg[r2];
+        }
+        update_flags(r0);
+      }
+    } break;
     case OP_NOT:
       @{ NOT } break;
     case OP_BR:
