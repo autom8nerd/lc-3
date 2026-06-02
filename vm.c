@@ -13,18 +13,20 @@
 // defining memory locations
 #define MEMORY_MAX (1 << 16)
 uint16_t memory[MEMORY_MAX];
-
+uint16_t sign_extend(uint16_t, int);
+void update_flags(uint16_t);
+void add(uint16_t instr);
 // registers; lc-3 has total of 10 registers. 8 GPCs, 1 PC, 1 conditional flag
 enum {
   R_R0 = 0,
   R_R1,
   R_R2,
   R_R3,
-
   R_R4,
   R_R5,
   R_R6,
   R_R7,
+
   R_PC,
   R_COND,
   R_COUNT
@@ -63,6 +65,16 @@ enum {
 };
 
 int main(int argc, const char *argv[]) {
+  if (argc < 2) {
+    printf("lc2 [image-file1] ...\n");
+    exit(2);
+  }
+  for (int j = 0; j < argc; j++) {
+    if (!read_image(argv[j])) {
+      printf("failed to load image: %s \n", argv[j]);
+      exit(1);
+    }
+  }
 
   reg[R_COND] = FL_ZRO;
   // pc start address at 0x4600
@@ -77,7 +89,8 @@ int main(int argc, const char *argv[]) {
         12; // op contains the opcode; the upper 4 bits out of the 16 bits
     switch (op) {
     case OP_ADD:
-      @{ ADD } break;
+      add(instr);
+      break;
     case OP_AND:
       @{ AND } break;
     case OP_NOT:
@@ -110,4 +123,33 @@ int main(int argc, const char *argv[]) {
       @{ BAD OPCODE } break;
     }
   }
+}
+void update_flags(uint16_t r) {
+  if (reg[r] == 0) {
+    reg[R_COND] = FL_ZRO;
+  } else if (reg[r] >> 15) {
+    reg[R_COND] = FL_NEG;
+  } else {
+    reg[R_COND] = FL_POS;
+  }
+}
+uint16_t sign_extend(uint16_t x, int bit_count) {
+  if ((x >> (bit_count - 1) & 1)) {
+    x |= (0xFFFF << bit_count);
+  }
+  return x;
+}
+
+void add(uint16_t instr) {
+  uint16_t destination_r = (instr >> 9) & 0x7;
+  uint16_t source1_r = (instr >> 6) & 0x7;
+  uint16_t flag = (instr >> 5) & 0x1;
+  if (flag != 1) {
+    uint16_t source2_r = instr & 0x7;
+    reg[destination_r] = reg[source2_r] + reg[source1_r];
+  } else {
+    uint16_t imm_value = sign_extend(instr & 0x1F, 5);
+    reg[destination_r] = reg[source1_r] + imm_value;
+  }
+  update_flags(destination_r);
 }
