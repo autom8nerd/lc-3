@@ -11,6 +11,7 @@ Electricity and an OS installed (preferrably Linux idk about Windows)
 ### Executing program
 
 * How to run the program
+  You'll have to pass the instructions in binary format. It takes a 16 bit number as instruction.
 ```
 lc-3 <instruction and parameters>
 ```
