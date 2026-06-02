@@ -58,6 +58,17 @@ enum {
   OP_TRAP    /* execute trap */
 };
 
+enum // TRAP routines provided by lc-3;
+{
+  TRAP_GETC =
+      0x20, /* get character from keyboard, not echoed onto the terminal */
+  TRAP_OUT = 0x21,   /* output a character */
+  TRAP_PUTS = 0x22,  /* output a word string */
+  TRAP_IN = 0x23,    /* get character from keyboard, echoed onto the terminal */
+  TRAP_PUTSP = 0x24, /* output a byte string */
+  TRAP_HALT = 0x25   /* halt the program */
+};
+
 enum {
   FL_POS =
       1 << 0, // P you set the respective bit with 1 << 0. in this, it is 001
@@ -222,4 +233,23 @@ void add(uint16_t instr) {
     reg[destination_r] = reg[source1_r] + imm_value;
   }
   update_flags(destination_r);
+}
+
+uint16_t swap16(uint16_t x) { return (x << 8) | (x >> 8); }
+void read_image_file(FILE *file) {
+  /* the origin tells us where in memory to place the image */
+  uint16_t origin;
+  fread(&origin, sizeof(origin), 1, file);
+  origin = swap16(origin);
+
+  /* we know the maximum file size so we only need one fread */
+  uint16_t max_read = MEMORY_MAX - origin;
+  uint16_t *p = memory + origin;
+  size_t read = fread(p, sizeof(uint16_t), max_read, file);
+
+  /* swap to little endian */
+  while (read-- > 0) {
+    *p = swap16(*p);
+    ++p;
+  }
 }
